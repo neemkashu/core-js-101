@@ -244,8 +244,13 @@ function getRectangleString(width, height) {
  *    => 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'
  *
  */
-function encodeToRot13(/* str */) {
-  throw new Error('Not implemented');
+function encodeToRot13(str) {
+  const arr = str.split('');
+  const input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+  const output = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
+
+  const arrROT13 = arr.map((char) => (input.includes(char) ? output[input.indexOf(char)] : char));
+  return arrROT13.join('');
 }
 
 /**
@@ -261,8 +266,9 @@ function encodeToRot13(/* str */) {
  *   isString('test') => true
  *   isString(new String('test')) => true
  */
-function isString(/* value */) {
-  throw new Error('Not implemented');
+function isString(value) {
+  if (value && (typeof value.valueOf() === 'string')) return true;
+  return typeof value === 'string';
 }
 
 
@@ -290,8 +296,13 @@ function isString(/* value */) {
  *   'Q♠' => 50
  *   'K♠' => 51
  */
-function getCardId(/* value */) {
-  throw new Error('Not implemented');
+function getCardId(value) {
+  const suit = value[value.length - 1];
+  const dignity = value.slice(0, value.length - 1);
+  const dignityMap = new Map([['A', 1], ['J', 11], ['Q', 12], ['K', 13]]);
+  const suitMap = new Map([['♣', 0], ['♦', 1], ['♥', 2], ['♠', 3]]);
+  const indexInSuit = dignityMap.get(dignity) || +dignity; // from one
+  return indexInSuit - 1 + suitMap.get(suit) * 13;
 }
 
 
