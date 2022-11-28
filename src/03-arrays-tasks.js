@@ -21,7 +21,7 @@
  *    [0, 1, 2, 3, 4, 5], 5    => 5
  */
 function findElement(/* arr, value */) {
-  throw new Error('Not implemented');
+  throw new Error('Not implemented'); // npm test test/03-array-tests
 }
 
 /**
