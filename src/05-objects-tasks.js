@@ -117,36 +117,170 @@ function fromJSON(proto, json) {
  *  For more examples see unit tests.
  */
 
+function buildSimpleSelector(type, identifier) {
+  const selectorTypes = {
+    element: {
+      openingSyntax: '',
+      closingSyntax: '',
+    },
+    class: {
+      openingSyntax: '.',
+      closingSyntax: '',
+    },
+    id: {
+      openingSyntax: '#',
+      closingSyntax: '',
+    },
+    attr: {
+      openingSyntax: '[',
+      closingSyntax: ']',
+    },
+    pseudoClass: {
+      openingSyntax: ':',
+      closingSyntax: '',
+    },
+    pseudoElement: {
+      openingSyntax: '::',
+      closingSyntax: '',
+    },
+  };
+  const { openingSyntax, closingSyntax } = selectorTypes[type];
+
+  return `${openingSyntax}${identifier}${closingSyntax}`;
+}
+class SelectorChain {
+  constructor(type, identifier) {
+    this.allSelectors = {};
+    /*
+    {
+      type1: [identifier1, identifier2, ...],
+      type2: [identifier1, identifier2, ...],
+      ...
+    }
+    */
+    this.selectorPriority = [
+      ['element', 6], ['id', 5], ['class', 4], ['attr', 3],
+      ['pseudoClass', 2], ['pseudoElement', 1],
+    ];
+    this.forbiddenDoubleTypes = ['element', 'id', 'pseudoElement'];
+    this.priorityMap = new Map(this.selectorPriority);
+    this.exeptionDoubleSelector = 'Element, id and pseudo-element '
+    + 'should not occur more then one time inside the selector';
+    this.exeptionOrder = 'Selector parts should be arranged '
+    + 'in the following order: element, id, class, attribute, '
+    + 'pseudo-class, pseudo-element';
+    this.lastSelectorPriority = 7;
+    this[type](identifier);
+  }
+
+  addSimpleSelector(type, identifier) {
+    this.checkSelectorDouble(type);
+    this.checkSelectorPriority(type);
+    this.setToMapSelector(type, identifier);
+    return this;
+  }
+
+  setToMapSelector(type, identifier) {
+    if (!Object.prototype.hasOwnProperty.call(this.allSelectors, type)) {
+      this.allSelectors[type] = [buildSimpleSelector(type, identifier)];
+    } else {
+      const valuesArray = this.allSelectors[type];
+      valuesArray.push(buildSimpleSelector(type, identifier));
+      this.allSelectors[type] = valuesArray;
+    }
+  }
+
+  checkSelectorDouble(type) {
+    if (this.forbiddenDoubleTypes.includes(type)
+    && Object.prototype.hasOwnProperty.call(this.allSelectors, type)) {
+      throw new Error(this.exeptionDoubleSelector);
+    }
+  }
+
+  checkSelectorPriority(type) {
+    const currentPriority = this.priorityMap.get(type);
+    if (currentPriority > this.lastSelectorPriority) {
+      throw new Error(this.exeptionOrder);
+    }
+    this.lastSelectorPriority = currentPriority;
+  }
+
+  element(identifier) {
+    return this.addSimpleSelector('element', identifier);
+  }
+
+  id(identifier) {
+    return this.addSimpleSelector('id', identifier);
+  }
+
+  class(identifier) {
+    return this.addSimpleSelector('class', identifier);
+  }
+
+  attr(identifier) {
+    return this.addSimpleSelector('attr', identifier);
+  }
+
+  pseudoClass(identifier) {
+    return this.addSimpleSelector('pseudoClass', identifier);
+  }
+
+  pseudoElement(identifier) {
+    return this.addSimpleSelector('pseudoElement', identifier);
+  }
+
+  static combine(selectorChainLeft, combinator, selectorChainRight) {
+    const part = `${selectorChainLeft.stringify()} ${combinator}`;
+    const part2 = `${part} ${selectorChainRight.stringify()}`;
+    this.selectorsString += part2;
+    return this;
+  }
+
+  stringify() {
+    const selectorArrays = Object.values(this.allSelectors);
+    return selectorArrays.flat().join('');
+  }
+}
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  allSelectors: [],
+
+  element(identifier) {
+    return new SelectorChain('element', identifier);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(identifier) {
+    return new SelectorChain('id', identifier);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(identifier) {
+    return new SelectorChain('class', identifier);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(identifier) {
+    return new SelectorChain('attr', identifier);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(identifier) {
+    return new SelectorChain('pseudoClass', identifier);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(identifier) {
+    return new SelectorChain('pseudoElement', identifier);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selectorChainLeft, combinator, selectorChainRight) {
+    const part = `${selectorChainLeft.stringify()} ${combinator}`;
+    const part2 = `${part} ${selectorChainRight.stringify()}`;
+    this.allSelectors.push(part2);
+    return this;
+  },
+  stringify() {
+    const allSelectorsChain = this.allSelectors.join('');
+    this.allSelectors.length = 0;
+    return allSelectorsChain;
   },
 };
-
 
 module.exports = {
   Rectangle,
