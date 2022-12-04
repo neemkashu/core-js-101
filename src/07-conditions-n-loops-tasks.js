@@ -315,8 +315,11 @@ function isCreditCardNumber(ccn) {
  *   10000 ( 1+0+0+0+0 = 1 ) => 1
  *   165536 (1+6+5+5+3+6 = 26,  2+6 = 8) => 8
  */
-function getDigitalRoot(/* num */) {
-  throw new Error('Not implemented');
+function getDigitalRoot(num) {
+  if (num < 10) return num;
+  const digits = `${num}`.split('');
+  const stepSum = digits.reduce((sum, digit) => sum + (+digit), 0);
+  return getDigitalRoot(stepSum);
 }
 
 
@@ -341,8 +344,21 @@ function getDigitalRoot(/* num */) {
  *   '{)' = false
  *   '{[(<{[]}>)]}' = true
  */
-function isBracketsBalanced(/* str */) {
-  throw new Error('Not implemented');
+function isBracketsBalanced(str) {
+  const parens = str.split('');
+  const closingParens = [']', ')', '>', '}'];
+  const openingParens = ['[', '(', '<', '{'];
+  let isBalanced = true;
+
+  const stackOfIncorrectParens = parens.reduce((stackOfParens, paren) => {
+    if (openingParens.includes(paren)) stackOfParens.push(paren);
+    if (closingParens.includes(paren)) {
+      const previousParen = stackOfParens.pop() || '';
+      if (closingParens.indexOf(paren) !== openingParens.indexOf(previousParen)) isBalanced = false;
+    }
+    return stackOfParens;
+  }, []);
+  return isBalanced && (stackOfIncorrectParens.length < 1);
 }
 
 
@@ -366,8 +382,8 @@ function isBracketsBalanced(/* str */) {
  *    365, 4  => '11231'
  *    365, 10 => '365'
  */
-function toNaryString(/* num, n */) {
-  throw new Error('Not implemented');
+function toNaryString(num, n) {
+  return num.toString(n);
 }
 
 
@@ -383,8 +399,46 @@ function toNaryString(/* num, n */) {
  *   ['/web/assets/style.css', '/.bin/mocha',  '/read.me'] => '/'
  *   ['/web/favicon.ico', '/web-scripts/dump', '/verbalizer/logs'] => '/'
  */
-function getCommonDirectoryPath(/* pathes */) {
-  throw new Error('Not implemented');
+function splitWithSavedSplitter(str, splitter = '/') {
+  const chars = str.split('');
+  const chainsWithSplitters = chars.reduce((chainIn, char, index) => {
+    const chains = chainIn;
+    if (char === splitter && index === 0) {
+      chains[0] = splitter;
+      if (chars.length > index + 1) chains.push('');
+      return chains;
+    }
+    if (char === splitter) {
+      chains.push(splitter);
+      if (index !== chars.length - 1) chains.push('');
+    } else {
+      chains[chains.length - 1] += char;
+    }
+    return chains;
+  }, ['']);
+  return chainsWithSplitters;
+}
+function comparePaths(path1, path2) { // expect strings
+  const directories1 = splitWithSavedSplitter(path1, '/');
+  const directories2 = splitWithSavedSplitter(path2, '/');
+
+  const firstUncommon = directories1.findIndex((dir, index) => {
+    const isSameIndex = directories2.indexOf(dir, index) !== index;
+    return isSameIndex;
+  });
+
+  if (firstUncommon < 0) return directories1.join('');
+  const commonStr = directories1.slice(0, firstUncommon).join('');
+  return commonStr;
+}
+function getCommonDirectoryPath(paths) { // expect array of strings
+  if (paths.length === 1) return paths[0];
+  if (paths.length === 2) return comparePaths(...paths);
+
+  let commonStr = comparePaths(paths[0], paths[1]);
+  commonStr = comparePaths(commonStr, paths[2]);
+
+  return commonStr;
 }
 
 
