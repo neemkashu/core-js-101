@@ -460,8 +460,23 @@ function getCommonDirectoryPath(paths) { // expect array of strings
  *                         [ 6 ]]
  *
  */
-function getMatrixProduct(/* m1, m2 */) {
-  throw new Error('Not implemented');
+function getMatrixProduct(m1, m2) {
+  // m1(mRow x n) * m2(n x kCol) = result (mRow x kCol)
+  const mRow = m1.length;
+  const kCol = m2[0].length;
+  const resultTemplate = new Array(mRow).fill(new Array(kCol).fill(0));
+
+  const result = resultTemplate.map((row, rowIndex) => {
+    const newRow = row.map((resultElem, colIndex) => {
+      const resultij = m1[rowIndex].reduce((sum, m1Elem, nIndex) => {
+        const rowSum = sum + m1Elem * m2[nIndex][colIndex];
+        return rowSum;
+      }, 0);
+      return resultij;
+    });
+    return newRow;
+  });
+  return result;
 }
 
 
@@ -495,8 +510,25 @@ function getMatrixProduct(/* m1, m2 */) {
  *    [    ,   ,    ]]
  *
  */
-function evaluateTicTacToePosition(/* position */) {
-  throw new Error('Not implemented');
+function evaluateTicTacToePosition(positions) {
+  const checkLine = (char1, char2, char3) => {
+    if (char1 === char2 && char2 === char3) return char1;
+    return undefined;
+  };
+  let winner;
+  const diagonalLT = [];
+  const diagonalLB = [];
+  for (let i = 0; i < positions.length; i += 1) {
+    const column = positions.map((row, index) => positions[index][i]);
+    const rowWin = checkLine(...positions[i]);
+    const colWin = checkLine(...column);
+    winner = undefined || rowWin || colWin;
+    diagonalLT.push(positions[i][i]);
+    diagonalLB.push(positions[positions.length - 1 - i][i]);
+    if (winner !== undefined) break;
+  }
+
+  return winner || checkLine(...diagonalLB) || checkLine(...diagonalLT);
 }
 
 
