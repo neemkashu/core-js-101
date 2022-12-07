@@ -28,8 +28,15 @@
  *      .catch((error) => console.log(error.message)) // 'Error: Wrong parameter is passed!
  *                                                    //  Ask her again.';
  */
-function willYouMarryMe(/* isPositiveAnswer */) {
-  throw new Error('Not implemented');
+function willYouMarryMe(isPositiveAnswer) { // npm test test/06-promises-tests
+  return new Promise((resolve, reject) => {
+    if (typeof isPositiveAnswer !== 'boolean') {
+      reject(new Error('Wrong parameter is passed! Ask her again.'));
+    } else {
+      const answer = (isPositiveAnswer) ? 'Hooray!!! She said "Yes"!' : 'Oh no, she said "No".';
+      resolve(answer);
+    }
+  });
 }
 
 
@@ -48,8 +55,8 @@ function willYouMarryMe(/* isPositiveAnswer */) {
  *    })
  *
  */
-function processAllPromises(/* array */) {
-  throw new Error('Not implemented');
+function processAllPromises(array) {
+  return Promise.all(array);
 }
 
 /**
@@ -71,8 +78,8 @@ function processAllPromises(/* array */) {
  *    })
  *
  */
-function getFastestPromise(/* array */) {
-  throw new Error('Not implemented');
+function getFastestPromise(array) {
+  return Promise.race(array);
 }
 
 /**
@@ -92,8 +99,43 @@ function getFastestPromise(/* array */) {
  *    });
  *
  */
-function chainPromises(/* array, action */) {
-  throw new Error('Not implemented');
+async function chainPromises(array, action) {
+  let accumInit;
+  let accumFinal;
+  // let extraAccum;
+  return array[0]
+    .then(
+      async (value0) => {
+        accumInit = value0;
+        array.shift();
+        accumFinal = await array.reduce(async (accum, promise, index) => {
+          // console.log('INDEX IS ', index);
+          // console.log('how is accum?', await accum);
+          const accumNew = await promise
+            .then(
+              async (value) => {
+                // console.log('INSIDE OF OK: accum, value!', await accum, value);
+                const newAccum = action(await accum, value);
+                return newAccum;
+              },
+              async () => {
+                // console.log('INSIDE REJECTED accum is', await accum);
+                if (index === array.length - 1) {
+                  // extraAccum = await accum;
+                  // console.log(extraAccum);
+                }
+                return accum;
+              },
+            );
+          return accumNew;
+        }, accumInit);
+        return accumFinal;
+      },
+      async () => {
+        array.shift();
+        return chainPromises(array, action);
+      },
+    );
 }
 
 module.exports = {
