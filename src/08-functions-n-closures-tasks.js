@@ -109,8 +109,20 @@ function memoize(func) {
  * }, 2);
  * retryer() => 2
  */
-function retry(/* func, attempts */) {
-  throw new Error('Not implemented');
+function retry(func, maxAttempts) {
+  let attempts = 0;
+  let result;
+  return function retryStarter() {
+    try {
+      attempts += 1;
+      result = func();
+    } catch (error) {
+      if (attempts < maxAttempts) {
+        retryStarter();
+      }
+    }
+    return result;
+  };
 }
 
 
@@ -137,8 +149,18 @@ function retry(/* func, attempts */) {
  * cos(3.141592653589793) ends
  *
  */
-function logger(/* func, logFunc */) {
-  throw new Error('Not implemented');
+function logger(func, logFunc) {
+  let funcName = func.toString().split(' ')[1];
+  const indexBraceChar = funcName.indexOf('(');
+  funcName = funcName.slice(0, indexBraceChar);
+
+  return function loggerInstance(...argsForFunc) {
+    const makeLogString = (arg) => `${funcName}(${arg})`;
+    logFunc(`${makeLogString(JSON.stringify(argsForFunc).slice(1, -1))} starts`);
+    const funcResult = func(...argsForFunc);
+    logFunc(`${makeLogString(JSON.stringify(argsForFunc).slice(1, -1))} ends`);
+    return funcResult;
+  };
 }
 
 
@@ -155,8 +177,8 @@ function logger(/* func, logFunc */) {
  *   partialUsingArguments(fn, 'a','b','c')('d') => 'abcd'
  *   partialUsingArguments(fn, 'a','b','c','d')() => 'abcd'
  */
-function partialUsingArguments(/* fn, ...args1 */) {
-  throw new Error('Not implemented');
+function partialUsingArguments(fn, ...args1) {
+  return (...nextArgs) => fn(...args1, ...nextArgs);
 }
 
 
@@ -177,8 +199,12 @@ function partialUsingArguments(/* fn, ...args1 */) {
  *   getId4() => 7
  *   getId10() => 11
  */
-function getIdGeneratorFunction(/* startFrom */) {
-  throw new Error('Not implemented');
+function getIdGeneratorFunction(startFrom) {
+  let nextNumber = startFrom - 1;
+  return () => {
+    nextNumber += 1;
+    return nextNumber;
+  };
 }
 
 
